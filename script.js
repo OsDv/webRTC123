@@ -148,7 +148,6 @@ async function startConnection() {
     peerName = peerNameInput.value;
     if (peerName == "") return;
     dataChannel = pc.createDataChannel("dataChannel");
-    dataChannel = event.channel;
     dataChannel.onopen = onDatachannelOpen;
     dataChannel.onmessage = function(event) {
       onMessageReceive(event.data);
