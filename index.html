@@ -10,34 +10,27 @@
 
 <body>
   <div class="container">
-    <button id="start-connection-button">start connection</button>
-    <div class="input-container">
-      <input type="text" id="message-input" name="message-input" placeholder="enter message...">
-      <button type="button" id="send-btn">send</button>
+    <div id="login-screen" class="screen active">
+      <input type="text" name="username" id="username-input" placeholder="username here...">
+      <input type="password" name="password" id="password-input" placeholder="password here...">
+      <button id="login-btn">login</button>
     </div>
-    <textarea id="message-textarea" readonly disabled></textarea>
-
-
-    <div>
+    <div id="messaging-screen" class="screen">
       <div class="input-container">
-        <textarea id="offer-area"></textarea>
-        <button id="create-offer">create offer</button>
-        <button id="receive-offer">reseive offer</button>
+        <input type="text" id="peer-username" placeholder="peer username...">
+        <button id="connection-button">start connection</button>
       </div>
+
+      <textarea id="message-textarea" readonly disabled></textarea>
       <div class="input-container">
-        <textarea id="response-area"></textarea>
-        <button id="create-response">create response</button>
-        <button id="receive-response">receive response</button>
-      </div>
-      <div class="input-container">
-        <textarea id="ice-area"></textarea>
-        <button id="add-ice">add ICE</button>
+        <input type="text" id="message-input" name="message-input" placeholder="enter message...">
+        <button type="button" id="send-btn">send</button>
       </div>
     </div>
-  </div>
 
-  <script src="mqtt.min.js"></script>
-  <script src="script.js"></script>
+
+    <script src="mqtt.min.js"></script>
+    <script src="script.js"></script>
 
 </body>
 
