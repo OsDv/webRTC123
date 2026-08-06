@@ -9,6 +9,7 @@ const connectionBtn = document.getElementById("connection-button");
 const peerNameInput = document.getElementById("peer-username");
 const passwordInput = document.getElementById("password-input");
 const usernameInput = document.getElementById("username-input");
+const micBtn = document.getElementById("michrophone-btn");
 const config = {
   iceServers: [
     { urls: "stun:stun1.l.google.com:19302" }
@@ -17,6 +18,12 @@ const config = {
 let Username = "";
 let isLoggedin = false;
 let isConnected = false;
+// VOice 
+let isMute = false;
+let isMicOn = false;
+let micMediaStream = null;
+const remoteAudio = document.getElementById("remote-audio");
+
 let peerName = "";
 messageArea.value = "";
 connectionBtn.addEventListener("click", () => {
@@ -50,14 +57,23 @@ loginBtn.addEventListener("click", () => {
     loginBtn.textContent = "login";
   }
 });
-
+micBtn.disabled = true;
+const micIcon = micBtn.firstChild;
+micBtn.addEventListener("click", () => {
+  if (isMute) {
+    micIcon.src = "icons/mic-on.svg";
+    console.log("unmute mic");
+    if (pc.connectionState === "connected") micMediaStream.getAudioTracks()[0].enabled = true;
+  } else {
+    micIcon.src = "icons/mic-off.svg";
+    if (pc.connectionState === "connected") micMediaStream.getAudioTracks()[0].enabled = false;
+  }
+  isMute = !isMute;
+})
 let pc;
 let dataChannel;
+let voiceChanel;
 
-function onTrack(e) {
-  console.log("got track...");
-  console.log(e.streams[0]);
-}
 
 function init(username, password) {
   // Setup Mqtt (for signaling)
@@ -87,6 +103,26 @@ function init(username, password) {
     loginBtn.textContent = "logout";
   })
 
+  // set michrophone
+  const constraints = {
+    'video': false,
+    'audio': true
+  }
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then(stream => {
+      console.log('Got MediaStream:', stream);
+      micBtn.src = "icons/mic-on.svg"
+      micBtn.disabled = false;
+      isMute = false;
+      isMicOn = true;
+      micMediaStream = stream;
+      console.log(stream.getAudioTracks()[0]);
+      // remoteAudio.src = window.URL.createObjectURL(stream);
+    })
+    .catch(error => {
+      console.error('Error accessing media devices.', error);
+      micBtn.disabled = true;
+    });
   // Set RTCPeerConnection
   pc = new RTCPeerConnection(config);
   pc.onicecandidate = onCandidate;
@@ -100,6 +136,8 @@ function init(username, password) {
       console.log("GOT MESSAGE: " + event.data);
     };
   };
+  // voiceChanel
+  pc.ontrack = onTrack;
 }
 function handleMqttMessage(message) {
   let objectMessage;
@@ -153,7 +191,8 @@ async function startConnection() {
       onMessageReceive(event.data);
       console.log("GOT MESSAGE: " + event.data);
     };
-
+    pc.addTrack(micMediaStream.getAudioTracks()[0], micMediaStream);
+    console.log("new track added");
     messageArea.value = "";
 
     await pc.setLocalDescription();
@@ -166,6 +205,7 @@ async function startConnection() {
 async function acceptOffer(offer) {
   try {
     pc.setRemoteDescription(new RTCSessionDescription(offer));
+    pc.addTrack(micMediaStream.getAudioTracks()[0], micMediaStream);
     // send answer
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
@@ -186,6 +226,11 @@ function onMessageReceive(message) {
 function onDatachannelOpen() {
   console.log("DATA CHANNEL OPEN!");
   peerNameInput.value = peerName;
+}
+function onTrack(e) {
+  remoteAudio.srcObject = e.streams[0];
+  // remoteAudio.src = window.URL.createObjectURL(e.stream);
+  console.log("audio track received...");
 }
 function setOnlineStatus(status) {
   switch (pc.connectionState) {
